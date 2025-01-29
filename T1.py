@@ -427,7 +427,7 @@ def train_model(training_file_path):
         return X, y
 
     def preprocess_data(X, y):
-        mask = y < 192  # Time to breakdown less than 72 hours
+        mask = y < 72  # Time to breakdown less than 72 hours
         X_filtered = X[mask]
         y_filtered = y[mask]
         
@@ -469,12 +469,12 @@ def predict_time(test_file_path):
         return df, X_test, serial_numbers, times
 
     def preprocess_test_data(X_test):
-        scaler = joblib.load(os.path.join(model_folder_path, 'scalerfinp.pkl'))
+        scaler = joblib.load(os.path.join(model_folder_path, 'scalermanis.pkl'))
         X_test_scaled = scaler.transform(X_test)
         return X_test_scaled
 
     def predict_time_to_breakdown(X_test_scaled):
-        model = load_model(os.path.join(model_folder_path, 'trained_modelFINp.h5'))
+        model = load_model(os.path.join(model_folder_path, 'trained_modelmanis.h5'))
         predictions = model.predict(X_test_scaled)
         return predictions
         
