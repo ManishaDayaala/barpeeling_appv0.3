@@ -427,7 +427,7 @@ def train_model(training_file_path):
         return X, y
 
     def preprocess_data(X, y):
-        mask = y < 15  # Time to breakdown less than 72 hours
+        mask = y < 72  # Time to breakdown less than 72 hours
         X_filtered = X[mask]
         y_filtered = y[mask]
         
