@@ -26,7 +26,7 @@ def set_random_seed(seed_value=42):
     tf.random.set_seed(seed_value)
 
 # Define the main folder path
-MAINFOLDER = r"./Appdata_barpeeling"
+MAINFOLDER = r"D:\Appdata_barpeeling"
 
 # Create other paths relative to the main folder
 training_file_path = os.path.join(MAINFOLDER, "Training", "Training_barpeeling.xlsx")  # FIXED TRAINING DATA
@@ -427,7 +427,7 @@ def train_model(training_file_path):
         return X, y
 
     def preprocess_data(X, y):
-        mask = y < 192  # Time to breakdown less than 72 hours
+        mask = y < 72  # Time to breakdown less than 72 hours
         X_filtered = X[mask]
         y_filtered = y[mask]
         
@@ -436,7 +436,7 @@ def train_model(training_file_path):
         scaler = StandardScaler()
         X_train_scaled = scaler.fit_transform(X_train)
         X_val_scaled = scaler.transform(X_val)
-        joblib.dump(scaler, os.path.join(model_folder_path, 'scalerfinp.pkl'))
+        joblib.dump(scaler, os.path.join(model_folder_path, 'scalerfinpv1.pkl'))
         return X_train_scaled, X_val_scaled, y_train, y_val
 
     def build_model(input_shape):
@@ -455,9 +455,9 @@ def train_model(training_file_path):
     X_train, X_val, y_train, y_val = preprocess_data(X, y)
     model = build_model(X_train.shape[1])
 
-    early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
-    model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=100, batch_size=32, callbacks=[early_stopping])
-    model.save(os.path.join(model_folder_path, 'trained_modelFINp.h5'))
+    #early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+    model.fit(X_train, y_train, validation_data=(X_val, y_val), epochs=100, batch_size=32)
+    model.save(os.path.join(model_folder_path, 'trained_modelFINpv1.h5'))
 
 # Define the prediction function
 def predict_time(test_file_path):
@@ -469,12 +469,12 @@ def predict_time(test_file_path):
         return df, X_test, serial_numbers, times
 
     def preprocess_test_data(X_test):
-        scaler = joblib.load(os.path.join(model_folder_path, 'scalerfinp.pkl'))
+        scaler = joblib.load(os.path.join(model_folder_path, 'scalerfinpv1.pkl'))
         X_test_scaled = scaler.transform(X_test)
         return X_test_scaled
 
     def predict_time_to_breakdown(X_test_scaled):
-        model = load_model(os.path.join(model_folder_path, 'trained_modelFINp.h5'))
+        model = load_model(os.path.join(model_folder_path, 'trained_modelFINpv1.h5'))
         predictions = model.predict(X_test_scaled)
         return predictions
         
@@ -553,12 +553,34 @@ def predict_time(test_file_path):
         weighted_breakdown_time = (W_min * min_time) + (W_mode * mode_midpoint)
     
         # Return the final weighted breakdown time
-        return (f"Breakdown might occur in approximately w.r.t 6 AM yesterday: "
-                f"{weighted_breakdown_time:.2f} hours")
+        # Choose the output based on the condition
+        final_output_time = max_time if weighted_breakdown_time < 10 else weighted_breakdown_time
+
+        # Return the final breakdown time
+    #     return (f"Breakdown might occur in approximately w.r.t 6 AM yesterday: \n"
+    #             f"{final_output_time:.2f} hours")
+
+    #     # return (f"Breakdown might occur in approximately w.r.t 6 AM yesterday: "
+    #     #         f"{weighted_breakdown_time:.2f} hours\n"
+    #     #         f"Maximum predicted breakdown time: {max_time:.2f} hours")
+    # except Exception as e:
+    #     return f"Error: {e}"
+
+        # Calculate weighted breakdown time
+        weighted_breakdown_time = (W_min * min_time) + (W_mode * mode_midpoint)
+
+        # Choose the output based on the condition
+        if weighted_breakdown_time < 10:
+            final_output_time = min(max_time, 48)  # If max_time > 48, show 48
+        else:
+            final_output_time = weighted_breakdown_time
+
+        # Return the final breakdown time
+        return (f"Breakdown might occur in approximately w.r.t 6 AM yesterday: \n"
+        f"{final_output_time:.2f} hours")
+
     except Exception as e:
         return f"Error: {e}"
-
-
    
 
     
@@ -576,7 +598,7 @@ if st.button("Predict Time", disabled=not st.session_state["check_bd_clicked"]):
         st.error("No breakdown predicted. Cannot proceed with time prediction.")
     else:
         with st.spinner("Training the model and making predictions..."):
-            #train_model(training_file_path)
+            train_model(training_file_path)
             result = predict_time(test_file_path)  # Predict time using predefined test data
         st.write(f"Predicted Time to Breakdown: {result}")
         st.success("Prediction complete!")
