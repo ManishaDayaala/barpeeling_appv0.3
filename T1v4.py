@@ -26,7 +26,8 @@ def set_random_seed(seed_value=42):
     tf.random.set_seed(seed_value)
 
 # Define the main folder path
-MAINFOLDER = r"D:\Appdata_barpeeling"
+MAINFOLDER = r"./Appdata_barpeeling"
+
 
 # Create other paths relative to the main folder
 training_file_path = os.path.join(MAINFOLDER, "Training", "Training_barpeeling.xlsx")  # FIXED TRAINING DATA
@@ -513,7 +514,7 @@ st.title("Time Prediction")
 
 if st.button("Predict Time"):
     with st.spinner("Training the model and making predictions..."):
-        train_model(training_file_path)
+        #train_model(training_file_path)
         result = predict_time(test_file_path)  # Predict time using predefined test data
     st.write(f"Predicted Time to Breakdown: {result}")
     st.success("Prediction complete!")
